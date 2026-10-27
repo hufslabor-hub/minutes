@@ -1,3 +1,10 @@
+// PDF 올리기 한도. 4MB 이하는 한 번에, 그보다 크면 512KB씩 나눠 올림(Vercel 요청 크기 제한 약 4.5MB 때문)
+export const DIRECT_MAX_MB = 4;
+export const DIRECT_MAX_BYTES = DIRECT_MAX_MB * 1024 * 1024;
+export const MAX_PDF_MB = 20;                       // 요약 서비스 요청 크기 한도(32MB)에 여유를 둠
+export const MAX_PDF_BYTES = MAX_PDF_MB * 1024 * 1024;
+export const CHUNK_BYTES = 512 * 1024;              // Firestore 문서 1MB 제한 안에 들어가는 크기
+
 export const CATEGORIES = ['일반 회의', '집행부 회의', '대의원대회', '교섭', '기타'] as const;
 
 export type ActionItem = { task: string; owner: string; due: string };

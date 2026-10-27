@@ -1,4 +1,5 @@
 'use server';
+import { createHash, timingSafeEqual } from 'node:crypto';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { adminAuth } from '@/lib/firebase';
@@ -58,4 +59,25 @@ export async function deleteMinute(fd: FormData) {
   await requireUser();
   await removeMinute(f(fd, 'id', 40));
   redirect('/');
+}
+
+// ── 가입 코드로 직접 가입 (SIGNUP_CODE 환경변수가 있을 때만 열림) ──
+const sameCode = (a: string, b: string) => timingSafeEqual(createHash('sha256').update(a).digest(), createHash('sha256').update(b).digest());
+
+export async function signup(_p: { ok: boolean; msg: string } | null, fd: FormData): Promise<{ ok: boolean; msg: string }> {
+  const code = process.env.SIGNUP_CODE;
+  if (!code) return { ok: false, msg: '지금은 회원가입을 받지 않습니다.' };
+  if (!(await limit('signup', null, 8, 3600))) return { ok: false, msg: '시도가 너무 많습니다. 잠시 후 다시 시도해 주세요.' };
+  const email = f(fd, 'email', 200).toLowerCase(), name = f(fd, 'name', 50), password = String(fd.get('password') ?? '').slice(0, 200);
+  if (!sameCode(f(fd, 'code', 200), code)) return { ok: false, msg: '가입 코드가 올바르지 않습니다.' };
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return { ok: false, msg: '이메일 형식이 올바르지 않습니다.' };
+  if (password.length < 10) return { ok: false, msg: '비밀번호는 10자 이상이어야 합니다.' };
+  try {
+    const u = await adminAuth().createUser({ email, password, ...(name ? { displayName: name } : {}) });
+    await adminAuth().setCustomUserClaims(u.uid, { minutes: true });
+  } catch (e) {
+    const c = (e as { code?: string }).code;
+    return { ok: false, msg: c === 'auth/email-already-exists' ? '이미 가입된 이메일입니다. 로그인해 주세요.' : c === 'auth/invalid-password' ? '비밀번호가 너무 간단합니다.' : '가입하지 못했습니다. 잠시 후 다시 시도해 주세요.' };
+  }
+  return { ok: true, msg: '가입되었습니다. 이제 로그인해 주세요.' };
 }
