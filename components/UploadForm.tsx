@@ -44,7 +44,7 @@ export default function UploadForm({ categories }: { categories: readonly string
       <label>메모 (선택: 중점적으로 볼 내용 등)<textarea name="memo" rows={2} maxLength={500} placeholder="예: 교섭 요구안과 결정 사항 위주로 정리" /></label>
       {err && <p ref={errRef} tabIndex={-1} className="err" role="alert">{err}</p>}
       <button className="btn" disabled={busy}>{busy ? `요약 중… ${sec}초 (보통 20~40초)` : 'AI로 요약하기'}</button>
-      <p className="meta">PDF 내용은 요약을 위해 Anthropic API로 전송되며, 원본 PDF는 저장하지 않고 요약만 보관합니다.</p>
+      <p className="meta">글자가 있는 PDF는 서버에서만 처리됩니다. 스캔(그림) PDF는 글자를 읽기 위해 Google Gemini로 전송됩니다. 원본 PDF는 저장하지 않고 요약만 보관합니다.</p>
     </form>
   );
 }
