@@ -131,7 +131,7 @@ export async function summarizePdf(pdf: Buffer, opts: { memo: string; category: 
 }
 
 /* ---------- 스캔(그림) PDF 전용: Gemini 무료 API ---------- */
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
 const S = { type: 'STRING' };
 const L = { type: 'ARRAY', items: { type: 'STRING' } };
 const SCHEMA = {
@@ -164,7 +164,13 @@ async function summarizeScanned(pdf: Buffer, opts: { memo: string; category: str
   });
   if (!res.ok) {
     console.error('gemini error', res.status, (await res.text().catch(() => '')).slice(0, 500));
-    throw new Error(res.status === 429 ? '무료 사용 한도에 도달했습니다. 잠시 후 다시 시도해 주세요.' : res.status === 400 || res.status === 403 ? 'Gemini 설정(API 키·모델 이름)을 확인해 주세요.' : '스캔 PDF 읽기에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+    throw new Error(
+        res.status === 429 ? '무료 사용 한도에 도달했습니다. 잠시 후 다시 시도해 주세요.'
+  : res.status === 404 ? '요약 모델을 더 이상 사용할 수 없습니다. 관리자가 GEMINI_MODEL 설정을 확인해 주세요.'
+  : res.status === 503 ? 'Gemini 서버가 혼잡합니다. 잠시 후 다시 시도해 주세요.'
+  : res.status === 400 || res.status === 403 ? 'Gemini 설정(API 키·모델 이름)을 확인해 주세요.'
+  : '스캔 PDF 읽기에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+);
   }
   const j = await res.json();
   const raw = j.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text ?? '').join('') ?? '';
