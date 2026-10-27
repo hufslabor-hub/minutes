@@ -26,3 +26,26 @@ export async function requireUser(): Promise<User> {
   if (!u) redirect('/login');
   return u;
 }
+
+/** ID 토큰 → 세션 쿠키 발급 */
+export async function createSessionCookie(idToken: string) {
+  const expiresIn = SESSION_SEC * 1000;
+  const sessionCookie = await adminAuth().createSessionCookie(idToken, { expiresIn });
+  const cookieStore = await cookies();
+  cookieStore.set(SESSION, sessionCookie, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: SESSION_SEC,
+    path: '/',
+  });
+}
+
+
+
+/** 세션 쿠키 삭제 */
+export async function clearSessionCookie() {
+  const cookieStore = await cookies();
+  cookieStore.delete(SESSION);
+}
+
