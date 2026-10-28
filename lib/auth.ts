@@ -15,7 +15,6 @@ export const isAllowed = (d: { email?: string; admin?: unknown }) => {
   if (!email) return false;
   return allowList().some((a) => (a.startsWith('@') ? email.endsWith(a) : email === a));
 };
-  d.admin === true || d.member === true || (!!d.email && allowList().includes(d.email.toLowerCase()));
 
 export async function getUser(): Promise<User | null> {
   const c = (await cookies()).get(SESSION)?.value;
