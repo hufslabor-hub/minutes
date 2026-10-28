@@ -9,7 +9,12 @@ export type User = { uid: string; email: string };
 
 const allowList = () => (process.env.ALLOWED_EMAILS ?? '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
 /** 허용된 이메일이거나, admin 권한이거나, 회원가입으로 만든 계정(member 권한)이면 사용 가능 */
-export const isAllowed = (d: { email?: string; admin?: unknown; member?: unknown }) =>
+export const isAllowed = (d: { email?: string; admin?: unknown }) => {
+  if (d.admin === true) return true;
+  const email = d.email?.toLowerCase();
+  if (!email) return false;
+  return allowList().some((a) => (a.startsWith('@') ? email.endsWith(a) : email === a));
+};
   d.admin === true || d.member === true || (!!d.email && allowList().includes(d.email.toLowerCase()));
 
 export async function getUser(): Promise<User | null> {
